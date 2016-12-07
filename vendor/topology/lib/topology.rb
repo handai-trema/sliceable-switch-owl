@@ -21,12 +21,14 @@ class Topology
 
   attr_reader :links
   attr_reader :ports
+  attr_reader :hosts
 
   def initialize
     @observers = []
     @ports = Hash.new { [].freeze }
     @links = []
     @hosts = []
+    @paths = []
   end
 
   def add_observer(observer)
@@ -35,6 +37,10 @@ class Topology
 
   def switches
     @ports.keys
+  end
+
+  def paths
+    @paths
   end
 
   def add_switch(dpid, ports)
@@ -78,6 +84,21 @@ class Topology
     @graph.route(ip_source_address, ip_destination_address)
   end
 
+  def add_path(path)
+    #source node
+    temp_path = []
+    temp_path << path[0].to_s
+    #switch
+    path[1..(path.count-2)].each_slice(2) do |port_a, port_b|
+      temp_path << port_a.dpid.to_s
+    end
+    #destination node
+    temp_path << path.last.to_s
+    #add path
+    @paths << temp_path
+    maybe_send_handler :add_path, path, self
+  end
+
   private
 
   def maybe_delete_link(port)
@@ -98,4 +119,6 @@ class Topology
       each.__send__ method, *args if each.respond_to?(method)
     end
   end
+
+
 end

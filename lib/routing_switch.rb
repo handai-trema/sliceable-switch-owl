@@ -32,6 +32,7 @@ class RoutingSwitch < Trema::Controller
     @options = Options.new(args)
     @path_manager = start_path_manager
     @topology = start_topology
+    @path_manager.add_observer @topology
     logger.info 'Routing Switch started.'
   end
 
@@ -42,7 +43,7 @@ class RoutingSwitch < Trema::Controller
 
   def packet_in(dpid, packet_in)
     @topology.packet_in(dpid, packet_in)
-    @path_manager.packet_in(dpid, packet_in) unless packet_in.lldp?
+    temp = @path_manager.packet_in(dpid, packet_in) unless packet_in.lldp?
   end
 
   private

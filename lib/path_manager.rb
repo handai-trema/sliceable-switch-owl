@@ -5,6 +5,7 @@ require 'trema'
 # L2 routing path manager
 class PathManager < Trema::Controller
   def start
+    @observers = []
     @graph = Graph.new
     logger.info 'Path Manager started.'
   end
@@ -18,6 +19,11 @@ class PathManager < Trema::Controller
                       raw_data: packet_in.raw_data,
                       actions: SendOutPort.new(each.number))
     end
+  end
+
+  #copy from topology.rb
+  def add_observer(observer)
+    @observers << observer
   end
 
   def add_port(port, _topology)
@@ -49,6 +55,14 @@ class PathManager < Trema::Controller
     shortest_path =
       @graph.dijkstra(packet_in.source_mac, packet_in.destination_mac)
     return unless shortest_path
+    maybe_send_handler :add_path, shortest_path
     Path.create shortest_path, packet_in
+  end
+
+  #copy from topology.rb
+  def maybe_send_handler(method, *args)
+    @observers.each do |each|
+      each.__send__ method, *args if each.respond_to?(method)
+    end
   end
 end

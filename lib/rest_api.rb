@@ -167,5 +167,6 @@ class RestApi < Grape::API
         find_mac_address(Port.parse(params[:port_id]), params[:mac_address_id])
     end
   end
+
 end
 # rubocop:enable ClassLength
