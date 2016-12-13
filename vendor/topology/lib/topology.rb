@@ -29,6 +29,7 @@ class Topology
     @links = []
     @hosts = []
     @paths = []
+    @slices = []
   end
 
   def add_observer(observer)
@@ -41,6 +42,10 @@ class Topology
 
   def paths
     @paths
+  end
+
+  def slices
+    @slices
   end
 
   def add_switch(dpid, ports)
@@ -97,6 +102,11 @@ class Topology
     #add path
     @paths << temp_path
     maybe_send_handler :add_path, path, self
+  end
+
+  def update_slice(slice)
+    @slices = slice
+    maybe_send_handler :update_slice, slice, self
   end
 
   private

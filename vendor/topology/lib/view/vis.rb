@@ -23,10 +23,11 @@ module View
         nodes = topology.switches.each_with_object({}) do |each, tmp|
           file.printf("%d Switch:%d\n",each.to_i, each.to_i)
         end
-        #host
+        #host and slice
         file.printf("host\n")
         topology.hosts.each do |each|  #for all host
-          file.printf("%s Host:%s\n",each[0].to_s, each[0].to_s)
+          slice_info = getSliceInfo(topology, each[0].to_s)
+          file.printf("%s Host:%s %s\n",each[0].to_s, each[0].to_s, slice_info)
         end
 
         @temp = Hash.new {[]}#check link
@@ -88,6 +89,19 @@ module View
         count_temp = count_temp + 1
       end
       print "false\n"
+    end
+
+    def getSliceInfo(topology, hostName)
+      #print hostName + " for debug slice info \n"
+      topology.slices.each do |each_slice|
+        each_slice.each do |name, each_port|
+          each_port.each do |each|
+            if each == hostName
+              return each_slice.to_s
+            end
+          end
+        end
+      end
     end
     
   end

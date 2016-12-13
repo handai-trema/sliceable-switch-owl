@@ -79,6 +79,10 @@ class TopologyController < Trema::Controller
     @topology.add_path(path)
   end
 
+  def update_slice(slice)
+    @topology.update_slice(slice)
+  end
+
   private
 
   def send_lldp(dpid, ports)
