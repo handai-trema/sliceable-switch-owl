@@ -139,5 +139,48 @@ class Slice
   def method_missing(method, *args, &block)
     @ports.__send__ method, *args, &block
   end
+
+
+  def self.split_slice(orig, into1, into2)
+    into1_name = into1.split("^")	#[0]:name, [1,2,...]:hosts
+    into1_hosts = into1_name[1].split(",")
+    into2_name = into2.split("^")
+    into2_hosts = into2_name[1].split(",")
+    orig_slice = find_by!(name: orig)
+    #into1_host, into2_hostがorig_sliceのすべてのhostを含んでいるか、足りていなかったらエラー
+    into_all_hosts = into1_hosts + into2_hosts
+puts "AllHosts: #{into_all_hosts}"
+    orig_all_hosts = []
+    orig_slice.each do |port, mac_addresses|
+      mac_addresses.each{|mac_address| orig_all_hosts << mac_address.to_s}
+    end
+puts "AllOrigHosts: #{orig_all_hosts}"
+    fail SplitArgumentError, "Split Argument is mistaken" if into_all_hosts.sort != orig_all_hosts.sort
+    #create new slices
+    create(into1_name[0])
+    slice1 = find_by!(name: into1_name[0])
+    create(into2_name[0])
+    slice2 = find_by!(name: into2_name[0])
+    #add hosts to each slices
+    orig_slice.each do |port, mac_addresses|
+      mac_addresses.each do |mac_address|
+        slice1.add_mac_address(mac_address, port) if into1_hosts.include?(mac_address)
+        slice2.add_mac_address(mac_address, port) if into2_hosts.include?(mac_address)
+      end
+    end
+    destroy(orig)
+    puts "split #{orig} into #{into1} and #{into2}"  
+  end
+
+
+  def self.merge_slices(orig, merg)
+    orig_slice = find_by!(name: orig)
+    merg_slice = find_by!(name: merg)
+    merg_slice.each do |port, mac_addresses|
+      mac_addresses.each{|each| orig_slice.add_mac_address(each, port)}
+    end
+    destroy(merg)
+    puts "merge #{orig} with #{merg}"
+  end
 end
 # rubocop:enable ClassLength

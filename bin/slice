@@ -128,7 +128,7 @@ module SliceApp
     c.flag [:m, :mac]
     c.desc 'Switch port'
     c.flag [:p, :port]
-    c.desc 'Slice name'
+    c.desc 'Slice '
     c.flag [:s, :slice]
     c.desc 'Location to find socket files'
     c.flag [:S, :socket_dir], default_value: Trema::DEFAULT_SOCKET_DIR
@@ -145,6 +145,40 @@ module SliceApp
                            port_no: port.fetch(:port_no))
     end
   end
+
+  desc 'Merge a slice with a slice'
+  arg_name 'orig_slice'
+  command :merge do |c|
+    c.desc 'Merge slice'
+    c.flag [:w, :with]
+    c.desc 'Location to find socket files'
+    c.flag [:S, :socket_dir], default_value: Trema::DEFAULT_SOCKET_DIR
+
+    c.action do |_global_options, options, args|
+      fail 'argument is required.' if args.empty?
+      fail '--with option is mandatory.' unless options[:with]
+      slice(options[:socket_dir]).merge_slices(args[0], options[:with])
+    end
+  end 
+
+  desc 'Split a slice into slices'
+  arg_name 'orig_slice'
+  command :split do |c|
+    c.desc 'Split into this slice1'
+    c.flag [:i, :into]
+    c.desc 'Split into this slice2'
+    c.flag [:a, :and]
+    c.desc 'Location to find socket files'
+    c.flag [:S, :socket_dir], default_value: Trema::DEFAULT_SOCKET_DIR
+
+    c.action do |_global_options, options, args|
+      fail 'argument is required.' if args.empty?
+      fail '--into option is mandatory.' unless options[:into]
+      fail '--and option is mandatory.' unless options[:and]
+      slice(options[:socket_dir]).split_slice(args[0], options[:into], options[:and])
+    end
+  end
+
 
   exit run(ARGV)
 end
