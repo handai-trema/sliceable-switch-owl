@@ -168,6 +168,7 @@ module SliceApp
       fail 'argument is required.' if args.empty?
       fail '--with option is mandatory.' unless options[:with]
       slice(options[:socket_dir]).merge_slices(args[0], options[:with])
+      update_slice(options[:socket_dir])
     end
   end 
 
@@ -186,6 +187,7 @@ module SliceApp
       fail '--into option is mandatory.' unless options[:into]
       fail '--and option is mandatory.' unless options[:and]
       slice(options[:socket_dir]).split_slice(args[0], options[:into], options[:and])
+      update_slice(options[:socket_dir])
     end
   end
 
