@@ -6,7 +6,7 @@
 ## 役割分担
 * スライスの分割・統合プログラム、REST APIの作成　坂田
 * 可視化のプログラム作成　秋下、坂本
-* 経路選択アルゴリズム部分のレポート作成　坂田
+* スライスの分割・統合プログラム、REST APIのレポート作成　坂田
 * 可視化部分のレポート作成　秋下、坂本
 
 ## 課題 (スライス機能の拡張)
@@ -42,14 +42,14 @@
 前回までの課題において、ノード（ホストおよびスイッチ）とリンクの情報をテキストファイル（toplogy.txt）に出力する他に、経路情報のファイル(path.txt)を出力するようプログラム（vis.rb）を拡張した。
 今回はホストの情報の出力時に追加でスライスの情報を付加したい。そこで、
 まず以下のファイルを変更し、スライス情報を保存するようにした。
-* [lib/routing_switch.rb]()
-* [vendor/topology/lib/view/topology_controller.rb]()
-* [vendor/topology/lib/view/controller.rb]()
-* [bin/slice]()
+* [lib/routing_switch.rb](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/lib/routing_switch.rb)
+* [vendor/topology/lib/view/topology_controller.rb](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/vendor/topology/lib/topology_controller.rb)
+* [vendor/topology/lib/view/topology.rb](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/vendor/topology/lib/topology.rb)
+* [bin/slice](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/bin/slice)
 
 
 また、スライス情報を出力するにあたって、以下のファイルに変更を加えた。
-* [vendor/topology/lib/view/vis.rb]()
+* [vendor/topology/lib/view/vis.rb](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/vendor/topology/lib/view/vis.rb)
 
 以上のファイルの主な変更点について説明を行う。
 
