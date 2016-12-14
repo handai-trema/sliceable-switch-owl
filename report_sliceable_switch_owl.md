@@ -26,9 +26,152 @@
 以降、それぞれについて説明する。
 
 ### スライスの分割・結合
+スライスの分割・結合を実装するためにlib/slice.rbとbin/sliceを編集した．以降それぞれについて説明する．
+####スライスの分割
+##### bin/slice
+bin/sliceのソースコードを以下に示す．
+```ruby
+  desc 'Split a slice into slices'
+  arg_name 'orig_slice'
+  command :split do |c|
+    c.desc 'Split into this slice1'
+    c.flag [:i, :into]
+    c.desc 'Split into this slice2'
+    c.flag [:a, :and]
+    c.desc 'Location to find socket files'
+    c.flag [:S, :socket_dir], default_value: Trema::DEFAULT_SOCKET_DIR
+
+    c.action do |_global_options, options, args|
+      fail 'argument is required.' if args.empty?
+      fail '--into option is mandatory.' unless options[:into]
+      fail '--and option is mandatory.' unless options[:and]
+      slice(options[:socket_dir]).split_slice(args[0], options[:into], options[:and])
+      update_slice(options[:socket_dir])
+    end
+  end
+```
+このプログラムにより以下のようなコマンドを作成した．
+```
+./bin/slice split <分割するスライス> --into <分割先1のスライス名>^<分割先1に追加するホスト群> -- and <分割先2のスライス名>^<分割先2に追加するホスト群>
+```
+プログラムの前半ではinto, andオプションの設定を，後半では引数やオプションの不足がないのかの判定と分割メソッドsplit_slicesを呼び出している．
+最後にスライス情報を更新ている．
+
+##### lib/slice.rb
+lib/slice.rbのソースコードを以下に示す．
+```ruby
+  def self.split_slice(orig, into1, into2)
+    into1_name = into1.split("^")	#[0]:name, [1,2,...]:hosts
+    into1_hosts = into1_name[1].split(",")
+    into2_name = into2.split("^")
+    into2_hosts = into2_name[1].split(",")
+    orig_slice = find_by!(name: orig)
+    #check
+    into_all_hosts = into1_hosts + into2_hosts
+    orig_all_hosts = []
+    orig_slice.each do |port, mac_addresses|
+      mac_addresses.each{|mac_address| orig_all_hosts << mac_address.to_s}
+    end
+    fail SplitArgumentError, "Split Argument is mistaken" if into_all_hosts.sort != orig_all_hosts.sort
+    #create new slices
+    create(into1_name[0])
+    slice1 = find_by!(name: into1_name[0])
+    create(into2_name[0])
+    slice2 = find_by!(name: into2_name[0])
+    #add hosts to each slices
+    orig_slice.each do |port, mac_addresses|
+      mac_addresses.each do |mac_address|
+        slice1.add_mac_address(mac_address, port) if into1_hosts.include?(mac_address)
+        slice2.add_mac_address(mac_address, port) if into2_hosts.include?(mac_address)
+      end
+    end
+    destroy(orig)
+    puts "split #{orig} into #{into1} and #{into2}"  
+  end
+```
+プログラムの初めには引数である分割先のスライス及びそのホストをプログラムで扱いやすくするために分割して変数に格納している．#check部では分割するスライスに含まれているホストと分割先の2つに追加するホストとの整合性を確認している．その後，分割先のスライスを作成し，それぞれにホストを追加し，最後に分割したスライスを削除してその旨を出力している．
+
+####スライスの結合
+##### bin/slice
+```ruby
+  desc 'Merge a slice with a slice'
+  arg_name 'orig_slice'
+  command :merge do |c|
+    c.desc 'Merge slice'
+    c.flag [:w, :with]
+    c.desc 'Location to find socket files'
+    c.flag [:S, :socket_dir], default_value: Trema::DEFAULT_SOCKET_DIR
+
+    c.action do |_global_options, options, args|
+      fail 'argument is required.' if args.empty?
+      fail '--with option is mandatory.' unless options[:with]
+      slice(options[:socket_dir]).merge_slices(args[0], options[:with])
+      update_slice(options[:socket_dir])
+    end
+  end
+```
+このプログラムにより以下のようなコマンドを作成した．
+```
+./bin/slice merge <結合先のスライス> --with <結合するスライス>
+```
+プログラムの前半ではwithオプションの設定を，後半では引数やオプションの不足がないのかの判定と結合メソッドmerge_slicesを呼び出している．
+最後にスライス情報を更新ている．
+
+##### lib/slice.rb
+```ruby
+  def self.merge_slices(orig, merg)
+    orig_slice = find_by!(name: orig)
+    merg_slice = find_by!(name: merg)
+    merg_slice.each do |port, mac_addresses|
+      mac_addresses.each{|each| orig_slice.add_mac_address(each, port)}
+    end
+    destroy(merg)
+    puts "merge #{orig} with #{merg}"
+  end
+```
+結合するスライスに所属しているホストをすべて結合先のスライスに追加し，結合したスライスを削除し，最後にその旨を出力している．
+
+
 
 ####　実行結果
-
+動作を確認するために以下のような順でコマンドを実行した．
+```
+ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice list
+slice1
+  0x1:1
+    11:11:11:11:11:11
+  0x1:3
+    22:22:22:22:22:22
+slice2
+  0x3:1
+    33:33:33:33:33:33
+  0x4:1
+    44:44:44:44:44:44
+ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice merge slice1 --with slice2
+ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice list
+slice1
+  0x1:1
+    11:11:11:11:11:11
+  0x1:3
+    22:22:22:22:22:22
+  0x3:1
+    33:33:33:33:33:33
+  0x4:1
+    44:44:44:44:44:44
+ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice split slice1 --into slice2^11:11:11:11:11:11,22:22:22:22:22:22 --and slice3^33:33:33:33:33:33,44:44:44:44:44:44
+ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice list
+slice2
+  0x1:1
+    11:11:11:11:11:11
+  0x1:3
+    22:22:22:22:22:22
+slice3
+  0x3:1
+    33:33:33:33:33:33
+  0x4:1
+    44:44:44:44:44:44
+```
+以上より，スライスの結合・分割が正しく行われていることが確認された．
 
 
 ### 可視化プログラム
