@@ -255,7 +255,7 @@ vis.js によってスライス機能を確認するため、以下のファイ�
 
 次に、ここでスライス名が一度出てきたかどうかを判定し、出現していなければ colorSlice に格納しておく。
 
-```nodejs[i].sp2```は、```nodejs[i]```が１行が空白で分割された配列を指し、```sp2```で左から３番目の要素を取り出す。つまり、スライス名のことである。
+`nodejs[i].sp2`は、`nodejs[i]`が１行が空白で分割された配列を指し、`sp2`で左から３番目の要素を取り出す。つまり、スライス名のことである。
 
 ```javascript
       nodeData += "{id:'"+nodejs[i].sp0+"',label:'"+nodejs[i].sp1+"',color:'"+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"',
@@ -263,7 +263,7 @@ vis.js によってスライス機能を確認するため、以下のファイ�
        shape:'image', image:'./host.jpg', size:30},";
 ```
 
-最後に、各スライスに所属するホスト毎に、ラベルの色を指定する。特に、```font: '14px arial "+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"'```の部分にあたる。ここで、現在みているホストのスライス名を確認し、そのスライス名が colorSlice の何番目の要素なのかを取得する。そして、その要素番号を colorData に指定することで、色の文字列を取得する。
+最後に、各スライスに所属するホスト毎に、ラベルの色を指定する。特に、`font: '14px arial "+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"'`の部分にあたる。ここで、現在みているホストのスライス名を確認し、そのスライス名が colorSlice の何番目の要素なのかを取得する。そして、その要素番号を colorData に指定することで、色の文字列を取得する。
 
 #### 実行結果
 
