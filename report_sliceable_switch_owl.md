@@ -140,10 +140,13 @@ end
 
 #####実行結果
 まずターミナルで以下のようにコマンドを実行した。
+
 ```
 ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ ./bin/trema run lib/routing_switch.rb -c trema.conf -- --slicing
 ```
+
 その後、別ターミナルで、以下のようなコマンドを実行した。
+
 ```
 ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./bin/slice add foo
 ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./bin/slice add foo2
@@ -154,6 +157,7 @@ ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./b
 ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./bin/trema send_packet --source host2 --dest host1
 ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./bin/trema send_packet --source host3 --dest host1
 ```
+
 このとき、状況を確認するために以下のようにコマンドを実行した。
 
 ```
@@ -171,9 +175,11 @@ ensyuu2@ensyuu2-VirtualBox:~/ensyuu2/work8/sliceable-switch-owl$ bundle exec ./b
 Packets sent:
   192.168.0.3 -> 192.168.0.1 = 1 packet
 ```
+
 上記のことから、スライスfooにはhost1およびhost2が属し、スライスfoo2にはhost3が属しているという状況であると読み取れる。
 
-このとき出力されるテキストファイル（topology.txt）のは以下のようになっている。
+このとき出力されるテキストファイル（topology.txt）のは以下のようになっている。<a id="output_topology"></a>
+
 ```
 6 Switch:6
 5 Switch:5
@@ -197,16 +203,81 @@ link
 100008 22:22:22:22:22:22 4
 100009 33:33:33:33:33:33 5
 ```
+
 上記より、ホストの情報のあとに正しくスライスの名前が入っていることがわかる。
-#### vis.js による動的な確認
 
+#### vis.js によるスライス機能の確認
 
+vis.js によってスライス機能を確認するため、以下のファイルを修正した。
+
+* [topology.js](https://github.com/handai-trema/sliceable-switch-owl/blob/develop/vendor/topology/lib/view/topology.js)
+
+修正内容としては、前章で[出力したトポロジー情報](#output_topology)にもとづいて、各ホストが所属するスライスを判定し、vis.js 上で色分けをする。
+
+上記の関連部分を以下に示す。
+
+```javascript
+    var colorData = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'black'];
+    var colorSlice = [];
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    for (var i=hostBegin; i < linkBegin; i++) {
+      if (colorSlice.indexOf(nodejs[i].sp2) >= 0) {
+      } else {
+        colorSlice.push(nodejs[i].sp2);
+      }
+      nodeData += "{id:'"+nodejs[i].sp0+"',label:'"+nodejs[i].sp1+"',color:'"+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"', fixed:{x:true, y:true}, font: '14px arial "+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"', shape:'image', image:'./host.jpg', size:30},";
+    }
+```
+
+ここで用いる定数、変数は次の表の通りである。
+
+| 変数名  | 型  | 意味 |
+|:-------------: |:-------------------:| :-------------|
+| colorData      | 文字列の１次元配列 | 予め色を格納し、スライスの色分けに利用 |
+| colorSlice     | 文字列の１次元配列        | 出現したスライス名を格納 |
+
+これらを用いて色分けを行っていく。
+
+```javascript
+    for (var i=hostBegin; i < linkBegin; i++) {
+==============<nodeData 整形部分>=============
+    }
+```
+
+まず、上記の for 文では、[出力したトポロジー情報](#output_topology)における host から link の間、つまりホストの情報を一行ずつ処理している。
+
+```javascript
+      if (colorSlice.indexOf(nodejs[i].sp2) >= 0) {
+      } else {
+        colorSlice.push(nodejs[i].sp2);
+      }
+```
+
+次に、ここでスライス名が一度出てきたかどうかを判定し、出現していなければ colorSlice に格納しておく。
+
+```nodejs[i].sp2```は、```nodejs[i]```が１行が空白で分割された配列を指し、```sp2```で左から３番目の要素を取り出す。つまり、スライス名のことである。
+
+```javascript
+      nodeData += "{id:'"+nodejs[i].sp0+"',label:'"+nodejs[i].sp1+"',color:'"+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"',
+       fixed:{x:true, y:true}, font: '14px arial "+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"',
+       shape:'image', image:'./host.jpg', size:30},";
+```
+
+最後に、各スライスに所属するホスト毎に、ラベルの色を指定する。特に、```font: '14px arial "+colorData[colorSlice.indexOf(nodejs[i].sp2)]+"'```の部分にあたる。ここで、現在みているホストのスライス名を確認し、そのスライス名が colorSlice の何番目の要素なのかを取得する。そして、その要素番号を colorData に指定することで、色の文字列を取得する。
 
 #### 実行結果
 
+実行手順は前回のレポートと同じであるため、割愛する。
 
+vis.js で出力するのは、[topology.txt](#output_topology) とする。
 
+以下が実行結果となる。
 
+![](slice.png)
+
+以上より、スライス foo に所属する Host11:11:11:11:11:11 と Host:22:22:22:22:22:22 のラベルが赤で表示され、スライス foo2 に所属する Host:33:33:33:33:33:33 のラベルが緑で表示されていることがわかる。
+
+したがって、vis.js によってスライス機能が確認できた。
 
 ## メモ
 実機の設定は前回の設定が残っている。
