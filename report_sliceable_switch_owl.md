@@ -219,7 +219,7 @@ vis.js によってスライス機能を確認するため、以下のファイ�
 ```javascript
     var colorData = ['red', 'green', 'blue', 'yellow', 'purple', 'pink', 'black'];
     var colorSlice = [];
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=============================================
     for (var i=hostBegin; i < linkBegin; i++) {
       if (colorSlice.indexOf(nodejs[i].sp2) >= 0) {
       } else {
