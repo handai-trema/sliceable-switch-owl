@@ -147,14 +147,12 @@ class Slice
     into2_name = into2.split("^")
     into2_hosts = into2_name[1].split(",")
     orig_slice = find_by!(name: orig)
-    #into1_host, into2_hostがorig_sliceのすべてのhostを含んでいるか、足りていなかったらエラー
+    #check
     into_all_hosts = into1_hosts + into2_hosts
-puts "AllHosts: #{into_all_hosts}"
     orig_all_hosts = []
     orig_slice.each do |port, mac_addresses|
       mac_addresses.each{|mac_address| orig_all_hosts << mac_address.to_s}
     end
-puts "AllOrigHosts: #{orig_all_hosts}"
     fail SplitArgumentError, "Split Argument is mistaken" if into_all_hosts.sort != orig_all_hosts.sort
     #create new slices
     create(into1_name[0])
