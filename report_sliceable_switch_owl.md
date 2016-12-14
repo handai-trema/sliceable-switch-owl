@@ -26,10 +26,14 @@
 以降、それぞれについて説明する。
 
 ### スライスの分割・結合
-スライスの分割・結合を実装するためにlib/slice.rbとbin/sliceを編集した．以降それぞれについて説明する．
+スライスの分割・結合を実装するために`lib/slice.rb`と`bin/slice`を編集した．以降それぞれについて説明する．
 ####スライスの分割
+スライスの分割の仕様を以下のように定めた。
+* 分割先として新しいスライスを2つ作成する
+* 元のスライスは分割後に削除する
+* 元のスライスのすべてのホストがオプションで指定されていなければエラーとしてプログラムを終了する
 ##### bin/slice
-bin/sliceのソースコードを以下に示す．
+`bin/slice`のソースコードの編集した部分を以下に示す．
 ```ruby
   desc 'Split a slice into slices'
   arg_name 'orig_slice'
@@ -54,11 +58,12 @@ bin/sliceのソースコードを以下に示す．
 ```
 ./bin/slice split <分割するスライス> --into <分割先1のスライス名>^<分割先1に追加するホスト群> -- and <分割先2のスライス名>^<分割先2に追加するホスト群>
 ```
-プログラムの前半ではinto, andオプションの設定を，後半では引数やオプションの不足がないのかの判定と分割メソッドsplit_slicesを呼び出している．
+ここで、ホスト郡は各ホストのMACアドレスをカンマ(,)で連結したものを表す。
+プログラムの前半ではinto, andオプションの設定を，後半では引数やオプションの不足がないのかの判定と分割メソッド`split_slices`を呼び出している．
 最後にスライス情報を更新ている．
 
 ##### lib/slice.rb
-lib/slice.rbのソースコードを以下に示す．
+`lib/slice.rb`のソースコードの編集した部分を以下に示す．
 ```ruby
   def self.split_slice(orig, into1, into2)
     into1_name = into1.split("^")	#[0]:name, [1,2,...]:hosts
@@ -89,10 +94,14 @@ lib/slice.rbのソースコードを以下に示す．
     puts "split #{orig} into #{into1} and #{into2}"  
   end
 ```
-プログラムの初めには引数である分割先のスライス及びそのホストをプログラムで扱いやすくするために分割して変数に格納している．#check部では分割するスライスに含まれているホストと分割先の2つに追加するホストとの整合性を確認している．その後，分割先のスライスを作成し，それぞれにホストを追加し，最後に分割したスライスを削除してその旨を出力している．
+ここでは`split_slice`というメソッドを追加している。初めに引数である分割先のスライス及びそのホストをプログラムで扱いやすくするために分割して変数に格納している．#check部では分割するスライスに含まれているホストと分割先の2つに追加するホストとの整合性を確認している．その後，分割先のスライスを作成し，それぞれにホストを追加し，最後に分割したスライスを削除してその旨を出力している．
 
 ####スライスの結合
+スライスの結合の仕様を以下のように定めた。
+* 引数として指定された既存のスライスにオプションで指定されたスライスのホストを追加する
+* 結合後、結合したスライスを削除する
 ##### bin/slice
+`bin/slice.rb`のソースコードの編集した部分を以下に示す．
 ```ruby
   desc 'Merge a slice with a slice'
   arg_name 'orig_slice'
@@ -114,10 +123,11 @@ lib/slice.rbのソースコードを以下に示す．
 ```
 ./bin/slice merge <結合先のスライス> --with <結合するスライス>
 ```
-プログラムの前半ではwithオプションの設定を，後半では引数やオプションの不足がないのかの判定と結合メソッドmerge_slicesを呼び出している．
+プログラムの前半ではwithオプションの設定を，後半では引数やオプションの不足がないのかの判定と結合メソッド`merge_slices`を呼び出している．
 最後にスライス情報を更新ている．
 
 ##### lib/slice.rb
+`lib/slice.rb`のソースコードの編集した部分を以下に示す．
 ```ruby
   def self.merge_slices(orig, merg)
     orig_slice = find_by!(name: orig)
@@ -129,12 +139,12 @@ lib/slice.rbのソースコードを以下に示す．
     puts "merge #{orig} with #{merg}"
   end
 ```
-結合するスライスに所属しているホストをすべて結合先のスライスに追加し，結合したスライスを削除し，最後にその旨を出力している．
+ここでは`merge_slices`というメソッドを追加している。結合するスライスに所属しているホストをすべて結合先のスライスに追加し，結合したスライスを削除し，最後にその旨を出力している．
 
 
 
 ####　実行結果
-動作を確認するために以下のような順でコマンドを実行した．
+動作を確認するためにスライドの一覧表示、スライドの結合、スライドの一覧表示、スライドの分割、スライドの一覧表示の順でコマンドを実行した．
 ```
 ensyuu2@ensyuu2-VirtualBox:~/sliceable-switch-owl$ ./bin/slice list
 slice1
@@ -422,6 +432,49 @@ vis.js で出力するのは、[topology.txt](#output_topology) とする。
 
 したがって、vis.js によってスライス機能が確認できた。
 
+### REST APIの追加
+#### スライスの分割
+`lib/rest_api.rb`の編集した部分を以下に示す。
+```ruby
+  desc 'Split a slice into two slices'
+  params do
+    requires :orig_slice_id, type: String, desc: 'OriginalSlice ID.'
+    requires :split_slice_id1, type: String, desc: 'Split Slice ID1'
+    requires :split_slice_id2, type: String, desc: 'Split Slice ID2'
+    requires :split_hosts1, type: String, desc: 'Split hosts1'
+    requires :split_hosts2, type: String, desc: 'Split hosts2'
+  end
+  post 'slices/split/:orig_slice_id/:split_slice_id1/split_hosts1/:split_slice_id2/:split_hosts2' do
+    rest_api do
+      split_arg1 = params[:split_slice_id1] + '^' + params[:split_hosts1]
+      split_arg2 = params[:split_slice_id2] + '^' + params[:split_hosts2]
+      Slice.split_slice(params[:orig_slice_id], split_arg1, split_arg2)
+    end
+  end
+```
+初めにパラメータとして順に、分割元のスライス、分割先のスライス1、分割先のスライス2、スライス1に所属させるホスト郡、スライス2に所属させるホスト郡を設定している。
+次にURIの設定を行っている。
+最後に、`split_slice`メソッドを呼び出すために、引数の設定を行い、そのメソッドを呼び出している。
+
+
+#### スライスの結合
+`lib/rest_api.rb`の編集した部分を以下に示す。
+```ruby
+  desc 'Merge a slice with a slice'
+  params do
+    requires :orig_slice_id, type: String, desc: 'Original Slice ID.'
+    requires :merg_slice_id, type: String, desc: 'Merge Slice ID.'
+  end
+  post 'slices/merge/:orig_slice_id/:merg_slice_id' do
+    rest_api do
+      Slice.merge_slices(params[:orig_slice_id], params[:merg_slice_id])
+    end
+  end
+```
+初めにパラメータとして順に、結合先のスライス、結合するスライスを設定している。
+次にURIの設定を行っている。
+最後に、`merge_slices`メソッドを呼び出している。
+
 ## メモ
 実機の設定は前回の設定が残っている。
 showコマンドで設定情報を確認すること。
@@ -431,6 +484,7 @@ showコマンドで設定情報を確認すること。
 
 * 世代毎の進化
 * topology.txt のファイル監視
+* REST APIのメソッド名の変更
 
 ##参考文献
 - デビッド・トーマス+アンドリュー・ハント(2001)「プログラミング Ruby」ピアソン・エデュケーション.  

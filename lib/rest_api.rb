@@ -170,10 +170,10 @@ class RestApi < Grape::API
 
   desc 'Merge a slice with a slice'
   params do
-    requires :orig_slice_id, type: String, desc: 'Slice ID.'
-    requires :merg_slice_id, type: String, desc: 'Slice ID.'
+    requires :orig_slice_id, type: String, desc: 'Original Slice ID.'
+    requires :merg_slice_id, type: String, desc: 'Merge Slice ID.'
   end
-  post 'slices/:orig_slice_id/:merg_slice_id' do
+  post 'slices/merge/:orig_slice_id/:merg_slice_id' do
     rest_api do
       Slice.merge_slices(params[:orig_slice_id], params[:merg_slice_id])
     end
@@ -181,13 +181,13 @@ class RestApi < Grape::API
 
   desc 'Split a slice into two slices'
   params do
-    requires :orig_slice_id, type: String, desc: 'Slice ID.'
+    requires :orig_slice_id, type: String, desc: 'Original Slice ID.'
     requires :split_slice_id1, type: String, desc: 'Split Slice ID1'
     requires :split_slice_id2, type: String, desc: 'Split Slice ID2'
     requires :split_hosts1, type: String, desc: 'Split hosts1'
     requires :split_hosts2, type: String, desc: 'Split hosts2'
   end
-  post 'slices/:orig_slice_id/:split_slice_id1/split_hosts1/:split_slice_id2/:split_hosts2' do
+  post 'slices/split/:orig_slice_id/:split_slice_id1/split_hosts1/:split_slice_id2/:split_hosts2' do
     rest_api do
       split_arg1 = params[:split_slice_id1] + '^' + params[:split_hosts1]
       split_arg2 = params[:split_slice_id2] + '^' + params[:split_hosts2]
