@@ -46,6 +46,11 @@ class RoutingSwitch < Trema::Controller
     temp = @path_manager.packet_in(dpid, packet_in) unless packet_in.lldp?
   end
 
+
+  def update_slice
+    @topology.update_slice(Slice.all)
+  end
+
   private
 
   def start_path_manager

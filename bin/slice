@@ -18,6 +18,10 @@ module SliceApp
     Trema.trema_process('RoutingSwitch', socket_dir).controller.slice
   end
 
+  def self.update_slice(socket_dir)
+    Trema.trema_process('RoutingSwitch', socket_dir).controller.update_slice
+  end
+
   desc 'Creates a new virtual slice'
   arg_name 'name'
   command :add do |c|
@@ -27,6 +31,7 @@ module SliceApp
     c.action do |_global_options, options, args|
       fail 'slice name is required.' if args.empty?
       slice(options[:socket_dir]).create(args.first)
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -39,6 +44,7 @@ module SliceApp
     c.action do |_global_options, options, args|
       fail 'slice name is required.' if args.empty?
       slice(options[:socket_dir]).destroy(args.first)
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -77,6 +83,7 @@ module SliceApp
       slice(options[:socket_dir]).
         find_by!(name: options[:slice]).
         add_port(dpid: port.fetch(:dpid), port_no: port.fetch(:port_no))
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -96,6 +103,7 @@ module SliceApp
       slice(options[:socket_dir]).
         find_by!(name: options[:slice]).
         delete_port(dpid: port.fetch(:dpid), port_no: port.fetch(:port_no))
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -119,6 +127,7 @@ module SliceApp
         find_by!(name: options[:slice]).
         add_mac_address(options[:mac],
                         dpid: port.fetch(:dpid), port_no: port.fetch(:port_no))
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -143,6 +152,7 @@ module SliceApp
         delete_mac_address(options[:mac],
                            dpid: port.fetch(:dpid),
                            port_no: port.fetch(:port_no))
+      update_slice(options[:socket_dir])
     end
   end
 
@@ -158,6 +168,7 @@ module SliceApp
       fail 'argument is required.' if args.empty?
       fail '--with option is mandatory.' unless options[:with]
       slice(options[:socket_dir]).merge_slices(args[0], options[:with])
+      update_slice(options[:socket_dir])
     end
   end 
 
@@ -176,6 +187,7 @@ module SliceApp
       fail '--into option is mandatory.' unless options[:into]
       fail '--and option is mandatory.' unless options[:and]
       slice(options[:socket_dir]).split_slice(args[0], options[:into], options[:and])
+      update_slice(options[:socket_dir])
     end
   end
 
